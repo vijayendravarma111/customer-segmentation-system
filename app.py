@@ -20,11 +20,9 @@ st.title("Customer Intelligence Dashboard")
 # LOAD DATA (CACHED)
 # -------------------------------
 @st.cache_data
+@st.cache_data
 def load_data():
-    return pd.read_excel(
-        r"C:\Users\vijayendravarma\Desktop\Resume projects\customer-segmentation-project\data\OnlineRetail.xlsx",
-        engine="openpyxl"
-    )
+    return pd.read_excel("data/OnlineRetail.xlsx", engine="openpyxl")
 
 try:
     df = load_data()
