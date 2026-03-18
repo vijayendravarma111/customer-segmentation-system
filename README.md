@@ -44,4 +44,4 @@ streamlit run app.py
 
 ## 👤 Author
 
-Your Name
+SAMUDRALA VIJAYENDRA VARMA
