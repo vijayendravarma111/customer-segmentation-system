@@ -58,7 +58,7 @@ customer-segmentation-project/
 
 ## 🌐 Live Demo
 
-(Add your Streamlit link here)
+https://customer-segmentation-systemm.streamlit.app/
 
 ---
 
