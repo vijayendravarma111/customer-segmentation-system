@@ -1,3 +1,7 @@
+# ==========================================
+# CUSTOMER INTELLIGENCE DASHBOARD (FINAL)
+# ==========================================
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -5,110 +9,168 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Customer Dashboard", layout="wide")
-st.title("Customer Segmentation Dashboard")
+# ------------------------------------------
+# PAGE CONFIG
+# ------------------------------------------
+st.set_page_config(page_title="Customer Intelligence Dashboard", layout="wide")
 
-# ---------------------------
-# LOAD DATA
-# ---------------------------
+st.title("Customer Intelligence Dashboard")
+
+# ------------------------------------------
+# LOAD DATA (CACHED)
+# ------------------------------------------
 @st.cache_data
 def load_data():
-    return pd.read_excel("data/OnlineRetail.xlsx", engine="openpyxl")
+    df = pd.read_excel("data/OnlineRetail.xlsx", engine="openpyxl")
+    return df
 
-df = load_data()
+try:
+    df = load_data()
+    st.success("Data loaded successfully")
+except Exception as e:
+    st.error(f"Error loading dataset: {e}")
+    st.stop()
 
-# ---------------------------
-# CLEAN DATA
-# ---------------------------
-df = df.dropna(subset=['CustomerID'])
-df = df[df['Quantity'] > 0]
-df = df[df['UnitPrice'] > 0]
+# ------------------------------------------
+# PROCESS DATA (CACHED)
+# ------------------------------------------
+@st.cache_data
+def process_data(df):
 
-df['TotalPrice'] = df['Quantity'] * df['UnitPrice']
-df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate'])
+    # Clean data
+    df = df.dropna(subset=['CustomerID'])
+    df = df[df['Quantity'] > 0]
+    df = df[df['UnitPrice'] > 0]
 
-# ---------------------------
-# RFM
-# ---------------------------
-snapshot_date = df['InvoiceDate'].max()
+    # Feature engineering
+    df['TotalPrice'] = df['Quantity'] * df['UnitPrice']
+    df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate'])
 
-rfm = df.groupby('CustomerID').agg({
-    'InvoiceDate': lambda x: (snapshot_date - x.max()).days,
-    'InvoiceNo': 'nunique',
-    'TotalPrice': 'sum'
-})
+    snapshot_date = df['InvoiceDate'].max()
 
-rfm.columns = ['Recency', 'Frequency', 'Monetary']
+    # RFM calculation
+    rfm = df.groupby('CustomerID').agg({
+        'InvoiceDate': lambda x: (snapshot_date - x.max()).days,
+        'InvoiceNo': 'nunique',
+        'TotalPrice': 'sum'
+    })
 
-# ---------------------------
-# SCALING + CLUSTERING
-# ---------------------------
-rfm_log = np.log1p(rfm)
+    rfm.columns = ['Recency', 'Frequency', 'Monetary']
 
-scaler = StandardScaler()
-rfm_scaled = scaler.fit_transform(rfm_log)
+    # Log transform
+    rfm_log = np.log1p(rfm)
 
-kmeans = KMeans(n_clusters=4, random_state=42)
-rfm['Cluster'] = kmeans.fit_predict(rfm_scaled)
+    # Scaling
+    scaler = StandardScaler()
+    rfm_scaled = scaler.fit_transform(rfm_log)
 
-# ---------------------------
-# SEGMENT LABEL
-# ---------------------------
-def segment(row):
-    if row['Cluster'] == 0:
-        return "New"
-    elif row['Cluster'] == 1:
-        return "VIP"
-    elif row['Cluster'] == 2:
-        return "Loyal"
-    else:
-        return "At Risk"
+    # Clustering
+    kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+    rfm['Cluster'] = kmeans.fit_predict(rfm_scaled)
 
-rfm['Segment'] = rfm.apply(segment, axis=1)
+    # Segment labeling
+    def assign_segment(cluster):
+        if cluster == 0:
+            return "New"
+        elif cluster == 1:
+            return "VIP"
+        elif cluster == 2:
+            return "Loyal"
+        else:
+            return "At Risk"
 
-# ---------------------------
-# CHURN
-# ---------------------------
-rfm['Churn'] = rfm['Recency'].apply(lambda x: 1 if x > 90 else 0)
+    rfm['Segment'] = rfm['Cluster'].apply(assign_segment)
 
-# ---------------------------
-# UI
-# ---------------------------
+    # Churn definition
+    rfm['Churn'] = rfm['Recency'].apply(lambda x: 1 if x > 90 else 0)
+
+    return rfm
+
+rfm = process_data(df)
+
+# ------------------------------------------
+# SIDEBAR FILTER
+# ------------------------------------------
+st.sidebar.header("Filters")
+
+segment_filter = st.sidebar.selectbox(
+    "Select Segment",
+    ["All"] + sorted(rfm['Segment'].unique())
+)
+
+if segment_filter != "All":
+    filtered_rfm = rfm[rfm['Segment'] == segment_filter]
+else:
+    filtered_rfm = rfm
+
+# ------------------------------------------
+# KPI SECTION
+# ------------------------------------------
 st.subheader("Overview")
 
 col1, col2, col3 = st.columns(3)
 
-col1.metric("Customers", len(rfm))
-col2.metric("Avg Spend", round(rfm['Monetary'].mean(), 2))
-col3.metric("Churn Rate", f"{rfm['Churn'].mean()*100:.2f}%")
+col1.metric("Total Customers", len(filtered_rfm))
+col2.metric("Avg Spending", f"${filtered_rfm['Monetary'].mean():.2f}")
+col3.metric("Churn Rate", f"{filtered_rfm['Churn'].mean()*100:.2f}%")
 
-# ---------------------------
-# FILTER
-# ---------------------------
-segment_filter = st.selectbox("Filter Segment", ["All"] + list(rfm['Segment'].unique()))
-
-if segment_filter != "All":
-    data = rfm[rfm['Segment'] == segment_filter]
-else:
-    data = rfm
-
-# ---------------------------
+# ------------------------------------------
 # TABLE
-# ---------------------------
+# ------------------------------------------
 st.subheader("Customer Data")
-st.dataframe(data.head())
+st.dataframe(filtered_rfm.head(10))
 
-# ---------------------------
-# PLOTS
-# ---------------------------
+# ------------------------------------------
+# SEGMENT DISTRIBUTION
+# ------------------------------------------
 st.subheader("Segment Distribution")
 
-fig, ax = plt.subplots()
-data['Segment'].value_counts().plot(kind='bar', ax=ax)
-st.pyplot(fig)
+fig1, ax1 = plt.subplots()
+filtered_rfm['Segment'].value_counts().plot(kind='bar', ax=ax1)
+ax1.set_ylabel("Customers")
+ax1.set_title("Customer Segments")
 
-st.subheader("Churn Distribution")
+st.pyplot(fig1)
+
+# ------------------------------------------
+# CHURN DISTRIBUTION
+# ------------------------------------------
+st.subheader("Churn Analysis")
 
 fig2, ax2 = plt.subplots()
-data['Churn'].value_counts().plot(kind='bar', ax=ax2)
+filtered_rfm['Churn'].value_counts().plot(kind='bar', ax=ax2)
+ax2.set_title("Churn vs Active")
+
 st.pyplot(fig2)
+
+# ------------------------------------------
+# SEGMENT INSIGHTS
+# ------------------------------------------
+st.subheader("Segment Insights")
+
+st.dataframe(
+    filtered_rfm.groupby('Segment')[['Recency', 'Frequency', 'Monetary', 'Churn']].mean()
+)
+
+# ------------------------------------------
+# BUSINESS RECOMMENDATIONS
+# ------------------------------------------
+st.subheader("Business Recommendations")
+
+st.markdown("""
+**VIP Customers**
+- Provide premium offers
+- Loyalty rewards
+
+**Loyal Customers**
+- Upsell products
+- Personalized emails
+
+**New Customers**
+- Onboarding discounts
+- First-time offers
+
+**At Risk Customers**
+- Win-back campaigns
+- Special discounts
+""")

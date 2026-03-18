@@ -1,17 +1,20 @@
-
 # Customer Segmentation & Churn Prediction System
 
-## 📌 Overview
+## 🚀 Overview
 
-This project builds an end-to-end customer intelligence system using RFM analysis, clustering, and churn prediction. It helps businesses identify high-value customers, detect churn risks, and make data-driven decisions.
+This project builds a customer intelligence system using RFM analysis, clustering, and churn prediction. It helps businesses understand customer behavior and take data-driven actions.
 
-## 🚀 Features
+---
+
+## 📊 Features
 
 * RFM (Recency, Frequency, Monetary) Analysis
-* K-Means Clustering for Customer Segmentation
-* Churn Prediction Logic
+* Customer Segmentation using K-Means Clustering
+* Churn Prediction based on inactivity
 * Interactive Dashboard using Streamlit
-* Business Insights & Recommendations
+* Business Recommendations for each segment
+
+---
 
 ## 🧠 Tech Stack
 
@@ -20,11 +23,15 @@ This project builds an end-to-end customer intelligence system using RFM analysi
 * Visualization (Matplotlib)
 * Dashboard (Streamlit)
 
-## 📊 Key Insights
+---
 
-* Identified VIP, Loyal, New, and At-Risk customers
-* Built churn detection based on inactivity
+## 📈 Key Insights
+
+* Identified high-value (VIP) customers
+* Detected churn-prone users
 * Enabled targeted marketing strategies
+
+---
 
 ## 🖥️ Run Locally
 
@@ -33,65 +40,28 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+---
+
+## 📁 Project Structure
+
+```
+customer-segmentation-project/
+│
+├── app.py
+├── requirements.txt
+├── runtime.txt
+├── data/
+│   └── OnlineRetail.xlsx
+```
+
+---
+
 ## 🌐 Live Demo
 
-(Add your deployed link here)
+(Add your Streamlit link here)
 
-## 📌 Future Improvements
-
-* Add real-time data pipeline
-* Improve churn model using XGBoost
-* Deploy using Docker
+---
 
 ## 👤 Author
 
 SAMUDRALA VIJAYENDRA VARMA
-=======
-# Customer Segmentation & Churn Prediction System
-
-## 📌 Overview
-
-This project builds an end-to-end customer intelligence system using RFM analysis, clustering, and churn prediction. It helps businesses identify high-value customers, detect churn risks, and make data-driven decisions.
-
-## 🚀 Features
-
-* RFM (Recency, Frequency, Monetary) Analysis
-* K-Means Clustering for Customer Segmentation
-* Churn Prediction Logic
-* Interactive Dashboard using Streamlit
-* Business Insights & Recommendations
-
-## 🧠 Tech Stack
-
-* Python (Pandas, NumPy)
-* Machine Learning (Scikit-learn)
-* Visualization (Matplotlib)
-* Dashboard (Streamlit)
-
-## 📊 Key Insights
-
-* Identified VIP, Loyal, New, and At-Risk customers
-* Built churn detection based on inactivity
-* Enabled targeted marketing strategies
-
-## 🖥️ Run Locally
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-## 🌐 Live Demo
-
-(Add your deployed link here)
-
-## 📌 Future Improvements
-
-* Add real-time data pipeline
-* Improve churn model using XGBoost
-* Deploy using Docker
-
-## 👤 Author
-
-Your Name
->>>>>>> a3e786f (Fix dependency issue for deployment)
